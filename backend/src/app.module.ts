@@ -7,6 +7,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { User } from './users/entities/user.entity';
+import { SpendingCategoriesModule } from './spending_categories/spending_categories.module';
 
 @Module({
   imports: [
@@ -32,6 +33,8 @@ import { User } from './users/entities/user.entity';
     }),
 
     UsersModule,
+
+    SpendingCategoriesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
