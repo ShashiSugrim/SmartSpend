@@ -6,8 +6,8 @@ const LandingPage = () => {
     return(
         <div className= "h-screen w-screen">
             <Hero/>
-            <Feature/>
             <ChartShowcase/>
+            <Feature/>
         </div>
     );
 }
