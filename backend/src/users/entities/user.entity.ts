@@ -17,24 +17,6 @@ export class User {
   @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
   income?: number;
 
-  @Column({ 
-    type: 'decimal', 
-    precision: 12, 
-    scale: 2, 
-    nullable: true,
-    name: 'total_budget'
-  })
-  totalBudget?: number;
-
-  @Column({ 
-    type: 'decimal', 
-    precision: 12, 
-    scale: 2, 
-    nullable: true,
-    name: 'current_total'
-  })
-  currentTotal?: number;
-
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

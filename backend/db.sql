@@ -14,8 +14,6 @@ CREATE TABLE users (
   password VARCHAR(255) NOT NULL, -- Note: Passwords should always be hashed!
   name VARCHAR(100),
   income DECIMAL(12, 2),
-  total_budget DECIMAL(12, 2),
-  current_total DECIMAL(12, 2)
 );
 
 -- -----------------------------------------------------
@@ -27,6 +25,7 @@ CREATE TABLE spending_categories (
   user_id INT NOT NULL,
   name VARCHAR(100) NOT NULL,
   total_budget_percent DECIMAL(5, 2), -- e.g., 25.50 for 25.50%
+  total_budget_number DECIMAL(12, 2), -- e.g., 500.00 for $500.00
   CONSTRAINT fk_user
     FOREIGN KEY(user_id) 
     REFERENCES users(user_id)

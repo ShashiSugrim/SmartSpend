@@ -21,15 +21,4 @@ export class CreateUserDto {
   @Transform(({ value }) => parseFloat(value))
   income?: number;
 
-  @IsOptional()
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
-  @Transform(({ value }) => parseFloat(value))
-  totalBudget?: number;
-
-  @IsOptional()
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
-  @Transform(({ value }) => parseFloat(value))
-  currentTotal?: number;
 }
