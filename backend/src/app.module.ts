@@ -9,6 +9,7 @@ import { UsersModule } from './users/users.module';
 import { User } from './users/entities/user.entity';
 import { SpendingCategoriesModule } from './spending_categories/spending_categories.module';
 import { SpendingCategory } from './spending_categories/entities/spending_category.entity';
+import { TransactionsModule } from './transactions/transactions.module';
 
 @Module({
   imports: [
@@ -36,6 +37,8 @@ import { SpendingCategory } from './spending_categories/entities/spending_catego
     UsersModule,
 
     SpendingCategoriesModule,
+
+    TransactionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
