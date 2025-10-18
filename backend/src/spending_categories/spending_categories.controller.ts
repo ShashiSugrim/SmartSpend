@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ValidationPipe, ParseIntPipe, HttpCode, HttpStatus } from '@nestjs/common';
 import { SpendingCategoriesService } from './spending_categories.service';
 import { CreateSpendingCategoryDto } from './dto/create-spending_category.dto';
 import { UpdateSpendingCategoryDto } from './dto/update-spending_category.dto';
@@ -8,7 +8,8 @@ export class SpendingCategoriesController {
   constructor(private readonly spendingCategoriesService: SpendingCategoriesService) {}
 
   @Post()
-  create(@Body() createSpendingCategoryDto: CreateSpendingCategoryDto) {
+  @HttpCode(HttpStatus.CREATED)
+  create(@Body(ValidationPipe) createSpendingCategoryDto: CreateSpendingCategoryDto) {
     return this.spendingCategoriesService.create(createSpendingCategoryDto);
   }
 
@@ -18,17 +19,18 @@ export class SpendingCategoriesController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.spendingCategoriesService.findOne(+id);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.spendingCategoriesService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSpendingCategoryDto: UpdateSpendingCategoryDto) {
-    return this.spendingCategoriesService.update(+id, updateSpendingCategoryDto);
+  update(@Param('id', ParseIntPipe) id: number, @Body(ValidationPipe) updateSpendingCategoryDto: UpdateSpendingCategoryDto) {
+    return this.spendingCategoriesService.update(id, updateSpendingCategoryDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.spendingCategoriesService.remove(+id);
+  @HttpCode(HttpStatus.NO_CONTENT)
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.spendingCategoriesService.remove(id);
   }
 }

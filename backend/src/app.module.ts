@@ -8,6 +8,7 @@ import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { User } from './users/entities/user.entity';
 import { SpendingCategoriesModule } from './spending_categories/spending_categories.module';
+import { SpendingCategory } from './spending_categories/entities/spending_category.entity';
 
 @Module({
   imports: [
@@ -27,7 +28,7 @@ import { SpendingCategoriesModule } from './spending_categories/spending_categor
         username: configService.get<string>('DB_USERNAME'),
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_DATABASE'),
-        entities: [User], // Auto-detects entities
+  entities: [User, SpendingCategory], // Register entities
         synchronize: true, // BE CAREFUL: Automatically creates DB schema. Good for dev, but use migrations for production.
       }),
     }),
