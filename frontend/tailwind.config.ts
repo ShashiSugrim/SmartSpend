@@ -19,7 +19,7 @@ const config: Config = {
             screens: { "2xl": "1400px" }
         },
         extend: {
-            colors: {
+            colors: {x
                 border: "var(--border)",
                 input: "var(--input)",
                 ring: "var(--ring)",
