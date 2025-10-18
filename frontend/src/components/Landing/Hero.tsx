@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button.tsx";
 import { ArrowRight, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Hero = () => {
     return (
@@ -33,11 +34,14 @@ const Hero = () => {
                     {/* CTA Buttons */}
                     <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
                         <Button
+                            asChild
                             size="lg"
                             className="bg-gradient-primary hover:opacity-90 transition-opacity shadow-lg text-lg px-8 group"
                         >
-                            Get Started Free
-                            <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
+                            <Link to="/signup">
+                                Get Started Free
+                                <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
+                            </Link>
                         </Button>
                         <Button
                             size="lg"
