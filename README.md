@@ -31,7 +31,6 @@ SmartSpend is a modern full-stack personal finance management application built 
 - **Styling:** Tailwind CSS
 - **UI Components:** Radix UI
 - **Routing:** React Router DOM
-- **State Management:** TanStack React Query
 - **Forms:** React Hook Form with Zod validation
 
 ## 🚀 Getting Started
