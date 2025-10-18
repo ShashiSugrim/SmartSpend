@@ -50,7 +50,6 @@
     --radius: 0.625rem;
 
     /* Blue palette (L C h) */
-    /* primary: solid blue, accent: cyan-blue */
     --primary-raw: 0.74 0.14 240; /* pure blue */
     --accent-raw:  0.78 0.12 210; /* cyan-blue */
 
@@ -94,26 +93,25 @@
     --sidebar-ring: oklch(var(--primary-raw));
 
     /* gradients */
-    --gradient-primary: linear-gradient(
-            135deg,
-            oklch(var(--primary-raw)) 0%,
-            oklch(var(--accent-raw)) 100%
-    );
-    --gradient-accent: linear-gradient(
-            135deg,
-            oklch(var(--accent-raw)) 0%,
-            oklch(var(--primary-raw)) 100%
-    );
-    --gradient-hero: radial-gradient(
-            60% 40% at 50% 0%,
-            color-mix(in oklab, oklch(var(--primary-raw)) 22%, transparent),
-            transparent 70%
-    );
+    --gradient-primary: linear-gradient(135deg, oklch(var(--primary-raw)) 0%, oklch(var(--accent-raw)) 100%);
+    --gradient-accent:  linear-gradient(135deg, oklch(var(--accent-raw)) 0%,  oklch(var(--primary-raw)) 100%);
+    --gradient-hero:    radial-gradient(60% 40% at 50% 0%, color-mix(in oklab, oklch(var(--primary-raw)) 22%, transparent), transparent 70%);
 
-    --shadow-sm: 0 2px 8px -2px oklch(var(--primary-raw) / 0.12);
-    --shadow-md: 0 8px 24px -4px oklch(var(--primary-raw) / 0.18);
-    --shadow-lg: 0 16px 48px -8px oklch(var(--primary-raw) / 0.25);
-    --shadow-glow: 0 0 40px oklch(var(--accent-raw) / 0.35);
+    --shadow-sm:  0 2px   8px  -2px oklch(var(--primary-raw) / 0.12);
+    --shadow-md:  0 8px  24px  -4px oklch(var(--primary-raw) / 0.18);
+    --shadow-lg:  0 16px 48px  -8px oklch(var(--primary-raw) / 0.25);
+    --shadow-glow: 0 0   40px       oklch(var(--accent-raw)  / 0.35);
+
+    /* --- SVG-safe palette (HSL) for charts (Recharts) --- */
+    --svg-chart-1: hsl(204 100% 50%);
+    --svg-chart-2: hsl(186 100% 45%);
+    --svg-chart-3: hsl(170 80% 45%);
+    --svg-chart-4: hsl(220 80% 55%);
+    --svg-chart-5: hsl(240 60% 60%);
+    --svg-foreground:         hsl(240 15% 9%);
+    --svg-muted-foreground:   hsl(215 16% 47%);
+    --svg-border:             hsl(240 6% 90%);
+    --svg-card:               hsl(0 0% 100%);
 }
 
 .dark {
@@ -158,16 +156,23 @@
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(var(--primary-raw));
 
-    --gradient-hero: radial-gradient(
-            60% 40% at 50% 0%,
-            color-mix(in oklab, oklch(var(--accent-raw)) 18%, transparent),
-            transparent 70%
-    );
+    --gradient-hero: radial-gradient(60% 40% at 50% 0%, color-mix(in oklab, oklch(var(--accent-raw)) 18%, transparent), transparent 70%);
 
-    --shadow-sm: 0 2px 8px -2px oklch(var(--primary-raw) / 0.25);
-    --shadow-md: 0 8px 24px -4px oklch(var(--primary-raw) / 0.3);
-    --shadow-lg: 0 16px 48px -8px oklch(var(--primary-raw) / 0.4);
-    --shadow-glow: 0 0 40px oklch(var(--accent-raw) / 0.5);
+    --shadow-sm:  0 2px   8px  -2px oklch(var(--primary-raw) / 0.25);
+    --shadow-md:  0 8px  24px  -4px oklch(var(--primary-raw) / 0.3);
+    --shadow-lg:  0 16px 48px  -8px oklch(var(--primary-raw) / 0.4);
+    --shadow-glow: 0 0   40px       oklch(var(--accent-raw)  / 0.5);
+
+    /* SVG fallbacks (dark) */
+    --svg-chart-1: hsl(204 100% 50%);
+    --svg-chart-2: hsl(186 100% 45%);
+    --svg-chart-3: hsl(170 80% 45%);
+    --svg-chart-4: hsl(220 80% 55%);
+    --svg-chart-5: hsl(240 60% 60%);
+    --svg-foreground:       hsl(240 20% 99%);
+    --svg-muted-foreground: hsl(215 15% 65%);
+    --svg-border:           hsl(240 4% 16%);
+    --svg-card:             hsl(240 12% 12%);
 }
 
 /* Base styles */
