@@ -29,7 +29,7 @@ import { TransactionsModule } from './transactions/transactions.module';
         username: configService.get<string>('DB_USERNAME'),
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_DATABASE'),
-  entities: [User, SpendingCategory], // Register entities
+  entities: [User, SpendingCategory, require('./transactions/entities/transaction.entity').Transaction], // Register entities
         synchronize: true, // BE CAREFUL: Automatically creates DB schema. Good for dev, but use migrations for production.
       }),
     }),
