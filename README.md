@@ -182,12 +182,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 This project was created for **HackKnight 2025** in the **Finance Track**. 
 
-**Team Members:**
-- **Ali** - [Role/Contribution]
-- **Kyoshi** - [Role/Contribution]  
-- **Shashi** - [Role/Contribution]
-- **Nirav** - [Role/Contribution]
-
 ## 🆘 Troubleshooting
 
 ### Common Issues
