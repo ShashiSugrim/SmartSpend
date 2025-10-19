@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { signupUser, loginUser, storeAccessToken } from '@/lib/api';
 
 interface FormData {
     fullName: string;
@@ -64,19 +65,31 @@ const SignupWizard = () => {
     const handleNext = () => { if (validateStep()) setStep(prev => prev + 1); };
     const handleBack = () => setStep(prev => prev - 1);
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!validateStep()) return;
 
-        // ✅ Final payload sent to backend
-        const payload = {
-            fullName: formData.fullName,
-            email: formData.email,
-            password: formData.password,
-            salary: formData.salary
-        };
+        try {
+            // Step 1: Sign up the user
+            await signupUser(formData.email, formData.password, formData.salary);
 
-        console.log('Submitting to backend:', payload);
-        alert('Signup complete! Payload logged in console ✅');
+            // Step 2: Sign in the user automatically
+            const accessToken = await loginUser(formData.email, formData.password);
+            
+            // Store the access token and email in localStorage
+            storeAccessToken(accessToken, formData.email);
+
+            // Success! Redirect to home page
+            window.location.href = '/';
+            
+        } catch (error) {
+            if (error instanceof Error && error.message === 'EMAIL_ALREADY_USED') {
+                setErrors({ email: 'Email already used' });
+                setStep(1); // Go back to step 1 to show the error
+                return;
+            }
+            console.error('Error during signup/login:', error);
+            alert('An error occurred. Please try again.');
+        }
     };
 
     return (
@@ -218,7 +231,7 @@ const SignupWizard = () => {
             {/* Footer */}
             <p className="text-center text-gray-600 text-sm mt-6 animate-fade-in">
                 Already have an account?{' '}
-                <a href="#" className="text-indigo-600 hover:text-indigo-700 font-medium">Sign in</a>
+                <a href="/login" className="text-indigo-600 hover:text-indigo-700 font-medium">Sign in</a>
             </p>
         </div>
     );
