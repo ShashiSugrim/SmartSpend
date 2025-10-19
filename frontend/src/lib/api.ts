@@ -89,3 +89,30 @@ export function clearAccessToken() {
 export function isAuthenticated(): boolean {
     return getAccessToken() !== null;
 }
+
+/**
+ * Create a spending category
+ */
+export async function createSpendingCategory(name: string, totalBudgetNumber: number): Promise<void> {
+    const token = getAccessToken();
+    
+    if (!token) {
+        throw new Error('NO_AUTH_TOKEN');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/spending-categories`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+            name,
+            totalBudgetNumber
+        }),
+    });
+
+    if (!response.ok) {
+        throw new Error('CREATE_CATEGORY_FAILED');
+    }
+}

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { signupUser, loginUser, storeAccessToken } from '@/lib/api';
+import { signupUser, loginUser, storeAccessToken, createSpendingCategory } from '@/lib/api';
 
 interface FormData {
     fullName: string;
@@ -12,8 +12,14 @@ interface FormData {
     salary: string;          // annual salary only
 }
 
+interface Category {
+    name: string;
+    totalBudgetNumber: string;
+}
+
 type Field = keyof FormData;
 type ErrorMap = Partial<Record<Field, string>>;
+type CategoryErrorMap = Record<number, { name?: string; totalBudgetNumber?: string }>;
 
 const SignupWizard = () => {
     const [step, setStep] = useState<number>(1);
@@ -24,11 +30,33 @@ const SignupWizard = () => {
         confirmPassword: '',
         salary: ''
     });
+    const [categories, setCategories] = useState<Category[]>([
+        { name: '', totalBudgetNumber: '' },
+        { name: '', totalBudgetNumber: '' },
+        { name: '', totalBudgetNumber: '' }
+    ]);
     const [errors, setErrors] = useState<ErrorMap>({});
+    const [categoryErrors, setCategoryErrors] = useState<CategoryErrorMap>({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleInputChange = (field: Field, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }));
         if (errors[field]) setErrors(prev => ({ ...prev, [field]: '' }));
+    };
+
+    const handleCategoryChange = (index: number, field: keyof Category, value: string) => {
+        setCategories(prev => {
+            const updated = [...prev];
+            updated[index] = { ...updated[index], [field]: value };
+            return updated;
+        });
+        // Clear error for this field
+        if (categoryErrors[index]?.[field]) {
+            setCategoryErrors(prev => ({
+                ...prev,
+                [index]: { ...prev[index], [field]: undefined }
+            }));
+        }
     };
 
     const validateStep = (): boolean => {
@@ -58,28 +86,52 @@ const SignupWizard = () => {
                 newErrors.salary = 'Please enter a valid amount';
         }
 
+        if (step === 4) {
+            const newCategoryErrors: CategoryErrorMap = {};
+            categories.forEach((cat, idx) => {
+                if (!cat.name.trim()) {
+                    newCategoryErrors[idx] = { ...newCategoryErrors[idx], name: 'Category name is required' };
+                }
+                if (!cat.totalBudgetNumber.trim()) {
+                    newCategoryErrors[idx] = { ...newCategoryErrors[idx], totalBudgetNumber: 'Budget is required' };
+                } else if (Number.isNaN(parseFloat(cat.totalBudgetNumber)) || parseFloat(cat.totalBudgetNumber) <= 0) {
+                    newCategoryErrors[idx] = { ...newCategoryErrors[idx], totalBudgetNumber: 'Enter a valid amount' };
+                }
+            });
+            setCategoryErrors(newCategoryErrors);
+            return Object.keys(newCategoryErrors).length === 0;
+        }
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleNext = () => { if (validateStep()) setStep(prev => prev + 1); };
+    const handleNext = () => { 
+        if (validateStep()) {
+            if (step === 3) {
+                // After step 3, sign up and login before going to step 4
+                handleSignupAndLogin();
+            } else {
+                setStep(prev => prev + 1);
+            }
+        }
+    };
     const handleBack = () => setStep(prev => prev - 1);
 
-    const handleSubmit = async () => {
-        if (!validateStep()) return;
-
+    const handleSignupAndLogin = async () => {
+        setIsSubmitting(true);
         try {
             // Step 1: Sign up the user
             await signupUser(formData.email, formData.password, formData.salary);
 
             // Step 2: Sign in the user automatically
-            const accessToken = await loginUser(formData.email, formData.password);
+            const token = await loginUser(formData.email, formData.password);
             
             // Store the access token and email in localStorage
-            storeAccessToken(accessToken, formData.email);
+            storeAccessToken(token, formData.email);
 
-            // Success! Redirect to home page
-            window.location.href = '/';
+            // Move to category creation step
+            setStep(4);
             
         } catch (error) {
             if (error instanceof Error && error.message === 'EMAIL_ALREADY_USED') {
@@ -89,15 +141,38 @@ const SignupWizard = () => {
             }
             console.error('Error during signup/login:', error);
             alert('An error occurred. Please try again.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleSubmit = async () => {
+        if (!validateStep()) return;
+
+        setIsSubmitting(true);
+        try {
+            // Create all 3 categories
+            for (const category of categories) {
+                await createSpendingCategory(category.name, parseFloat(category.totalBudgetNumber));
+            }
+
+            // Success! Redirect to home page
+            window.location.href = '/';
+            
+        } catch (error) {
+            console.error('Error creating categories:', error);
+            alert('An error occurred while creating categories. Please try again.');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     return (
         <div className="w-full max-w-md">
-            {/* Progress Indicator (3 steps) */}
+            {/* Progress Indicator (4 steps) */}
             <div className="mb-8 animate-fade-in">
                 <div className="flex justify-between items-center mb-2">
-                    {[1, 2, 3].map((s) => (
+                    {[1, 2, 3, 4].map((s) => (
                         <div
                             key={s}
                             className={`flex-1 h-2 rounded-full mx-1 transition-all duration-500 ${
@@ -106,7 +181,7 @@ const SignupWizard = () => {
                         />
                     ))}
                 </div>
-                <p className="text-sm text-gray-600 text-center">Step {step} of 3</p>
+                <p className="text-sm text-gray-600 text-center">Step {step} of 4</p>
             </div>
 
             {/* Card Container */}
@@ -220,8 +295,78 @@ const SignupWizard = () => {
 
                         <div className="flex gap-3 mt-6">
                             <Button onClick={handleBack} variant="outline" className="flex-1">Back</Button>
-                            <Button onClick={handleSubmit} className="flex-1 bg-indigo-600 hover:bg-indigo-700">
-                                Complete Sign Up
+                            <Button 
+                                onClick={handleNext} 
+                                className="flex-1 bg-indigo-600 hover:bg-indigo-700"
+                                disabled={isSubmitting}
+                            >
+                                {isSubmitting ? 'Creating Account...' : 'Continue'}
+                            </Button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Step 4: Budget Categories */}
+                {step === 4 && (
+                    <div key="step4" className="animate-fade-in-up">
+                        <h2 className="text-3xl font-bold text-gray-800 mb-2">Budget Categories 📊</h2>
+                        <p className="text-gray-600 mb-6">Create 3 categories to organize your spending</p>
+
+                        <div className="space-y-4">
+                            {categories.map((category, index) => (
+                                <div key={index} className="p-4 border border-gray-200 rounded-lg">
+                                    <p className="text-sm font-semibold text-gray-700 mb-3">Category {index + 1}</p>
+                                    <div className="space-y-3">
+                                        <div>
+                                            <Label htmlFor={`category-name-${index}`} className="text-gray-700">
+                                                Category Name
+                                            </Label>
+                                            <Input
+                                                id={`category-name-${index}`}
+                                                type="text"
+                                                placeholder="e.g., Groceries, Fashion, Entertainment"
+                                                value={category.name}
+                                                onChange={(e) => handleCategoryChange(index, 'name', e.target.value)}
+                                                className={`mt-1 ${categoryErrors[index]?.name ? 'border-red-500' : ''}`}
+                                            />
+                                            {categoryErrors[index]?.name && (
+                                                <p className="text-red-500 text-sm mt-1">{categoryErrors[index].name}</p>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <Label htmlFor={`category-budget-${index}`} className="text-gray-700">
+                                                Monthly Budget Limit
+                                            </Label>
+                                            <div className="relative mt-1">
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                                                <Input
+                                                    id={`category-budget-${index}`}
+                                                    type="number"
+                                                    placeholder="500"
+                                                    value={category.totalBudgetNumber}
+                                                    onChange={(e) => handleCategoryChange(index, 'totalBudgetNumber', e.target.value)}
+                                                    className={`pl-7 ${categoryErrors[index]?.totalBudgetNumber ? 'border-red-500' : ''}`}
+                                                />
+                                            </div>
+                                            {categoryErrors[index]?.totalBudgetNumber && (
+                                                <p className="text-red-500 text-sm mt-1">{categoryErrors[index].totalBudgetNumber}</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="flex gap-3 mt-6">
+                            <Button onClick={handleBack} variant="outline" className="flex-1" disabled={isSubmitting}>
+                                Back
+                            </Button>
+                            <Button 
+                                onClick={handleSubmit} 
+                                className="flex-1 bg-indigo-600 hover:bg-indigo-700"
+                                disabled={isSubmitting}
+                            >
+                                {isSubmitting ? 'Creating Categories...' : 'Complete Sign Up'}
                             </Button>
                         </div>
                     </div>
