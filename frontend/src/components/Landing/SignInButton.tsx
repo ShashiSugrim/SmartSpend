@@ -59,6 +59,13 @@ const SignInButton = () => {
                 📊 My Categories
               </Button>
               <Button
+                onClick={() => window.location.href = '/transactions'}
+                variant="ghost"
+                className="w-full justify-start text-green-600 hover:text-green-700 hover:bg-green-50"
+              >
+                💳 My Transactions
+              </Button>
+              <Button
                 onClick={handleLogout}
                 variant="ghost"
                 className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"

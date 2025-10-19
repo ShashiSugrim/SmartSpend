@@ -84,13 +84,22 @@ const CategoriesPage = () => {
                             Logged in as <span className="font-medium text-indigo-600">{userEmail}</span>
                         </p>
                     </div>
-                    <Button
-                        onClick={() => window.location.href = '/'}
-                        variant="outline"
-                        className="bg-white"
-                    >
-                        ← Back to Home
-                    </Button>
+                    <div className="flex gap-3">
+                        <Button
+                            onClick={() => window.location.href = '/transactions'}
+                            variant="outline"
+                            className="bg-white"
+                        >
+                            💳 Transactions
+                        </Button>
+                        <Button
+                            onClick={() => window.location.href = '/'}
+                            variant="outline"
+                            className="bg-white"
+                        >
+                            ← Back to Home
+                        </Button>
+                    </div>
                 </div>
             </div>
 

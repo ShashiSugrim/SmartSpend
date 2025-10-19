@@ -163,3 +163,75 @@ export async function getSpendingCategories(): Promise<SpendingCategory[]> {
 
     return response.json();
 }
+
+/**
+ * Transaction interface matching the backend response
+ */
+export interface Transaction {
+    transactionId: number;
+    category: {
+        categoryId: number;
+        name: string;
+        totalBudgetNumber: string;
+    };
+    itemPurchased: string;
+    cost: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+/**
+ * Create a new transaction
+ */
+export async function createTransaction(
+    categoryId: number,
+    itemPurchased: string,
+    cost: number
+): Promise<void> {
+    const token = getAccessToken();
+    
+    if (!token) {
+        throw new Error('NO_AUTH_TOKEN');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/transactions`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+            categoryId,
+            itemPurchased,
+            cost
+        }),
+    });
+
+    if (!response.ok) {
+        throw new Error('CREATE_TRANSACTION_FAILED');
+    }
+}
+
+/**
+ * Get all transactions for the logged-in user
+ */
+export async function getTransactions(): Promise<Transaction[]> {
+    const token = getAccessToken();
+    
+    if (!token) {
+        throw new Error('NO_AUTH_TOKEN');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/transactions`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error('FETCH_TRANSACTIONS_FAILED');
+    }
+
+    return response.json();
+}

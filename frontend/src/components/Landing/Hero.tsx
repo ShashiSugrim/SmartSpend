@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button.tsx";
-import { ArrowRight, Sparkles, LayoutGrid } from "lucide-react";
+import { ArrowRight, Sparkles, LayoutGrid, Receipt } from "lucide-react";
 import { Link } from "react-router-dom";
 import { isAuthenticated, getUserEmail } from "@/lib/api";
 import { useEffect, useState } from "react";
@@ -45,18 +45,31 @@ const Hero = () => {
                         {userLoggedIn ? (
                             // Buttons for logged-in users
                             <>
-                                <Button
-                                    asChild
-                                    size="lg"
-                                    className="bg-gradient-primary hover:opacity-90 transition-opacity shadow-lg text-lg px-8 group"
-                                >
-                                    <Link to="/categories">
-                                        <LayoutGrid className="mr-2 w-5 h-5" />
-                                        View My Categories
-                                        <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
-                                    </Link>
-                                </Button>
-                                <div className="text-sm text-muted-foreground">
+                                <div className="flex flex-col sm:flex-row gap-3">
+                                    <Button
+                                        asChild
+                                        size="lg"
+                                        className="bg-gradient-primary hover:opacity-90 transition-opacity shadow-lg text-lg px-8 group"
+                                    >
+                                        <Link to="/categories">
+                                            <LayoutGrid className="mr-2 w-5 h-5" />
+                                            My Categories
+                                            <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
+                                        </Link>
+                                    </Button>
+                                    <Button
+                                        asChild
+                                        size="lg"
+                                        variant="outline"
+                                        className="text-lg px-8 border-2 bg-white/80 backdrop-blur"
+                                    >
+                                        <Link to="/transactions">
+                                            <Receipt className="mr-2 w-5 h-5" />
+                                            My Transactions
+                                        </Link>
+                                    </Button>
+                                </div>
+                                <div className="text-sm text-muted-foreground w-full sm:w-auto text-center">
                                     Welcome back, <span className="font-medium text-primary">{userEmail}</span>! 👋
                                 </div>
                             </>

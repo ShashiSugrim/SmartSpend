@@ -4,6 +4,7 @@ import SignupPage from "@/pages/SignupPage.tsx";
 import BudgetPage from "@/pages/BudgetPage.tsx";
 import LoginPage from "@/pages/LoginPage.tsx";
 import CategoriesPage from "@/pages/CategoriesPage.tsx";
+import TransactionsPage from "@/pages/TransactionsPage.tsx";
 
 function App() {
     return (
@@ -12,6 +13,7 @@ function App() {
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/categories" element={<CategoriesPage />} />
+            <Route path="/transactions" element={<TransactionsPage />} />
             <Route path ="/main" element = {<BudgetPage />} />
             <Route path="/home" element={<Navigate to="/" replace />} />
             <Route path="*" element={<div className="p-10 text-center">404 — Not found</div>} />
