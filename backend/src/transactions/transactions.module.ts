@@ -9,6 +9,12 @@ import { SpendingCategoriesModule } from '../spending_categories/spending_catego
 @Module({
   imports: [TypeOrmModule.forFeature([Transaction]), UsersModule, SpendingCategoriesModule],
   controllers: [TransactionsController],
-  providers: [TransactionsService],
+  providers: [
+    {
+      provide: TransactionsService,
+      useClass: TransactionsService,
+      scope: 2, // REQUEST scope
+    },
+  ],
 })
 export class TransactionsModule {}

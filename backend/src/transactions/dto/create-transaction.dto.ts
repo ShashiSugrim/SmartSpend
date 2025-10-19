@@ -2,9 +2,6 @@ import { IsInt, IsNotEmpty, IsOptional, IsString, IsNumber, Min } from 'class-va
 import { Transform } from 'class-transformer';
 
 export class CreateTransactionDto {
-	@IsInt()
-	userId: number;
-
 	@IsOptional()
 	@IsInt()
 	categoryId?: number;

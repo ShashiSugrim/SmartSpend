@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject, Scope } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
@@ -6,18 +6,22 @@ import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { Transaction } from './entities/transaction.entity';
 import { UsersService } from '../users/users.service';
 import { SpendingCategoriesService } from '../spending_categories/spending_categories.service';
+import { REQUEST } from '@nestjs/core';
+import type { UserRequest } from '../common/middleware/auth.middleware';
 
-@Injectable()
+@Injectable({ scope: Scope.REQUEST })
 export class TransactionsService {
   constructor(
     @InjectRepository(Transaction)
     private readonly transactionRepository: Repository<Transaction>,
     private readonly usersService: UsersService,
     private readonly categoriesService: SpendingCategoriesService,
+    @Inject(REQUEST) private readonly request: UserRequest,
   ) {}
 
   async create(createTransactionDto: CreateTransactionDto): Promise<Transaction> {
-    const { userId, categoryId, itemPurchased, cost, plaidCategory } = createTransactionDto;
+    const userId = this.request.user_id; // Get userId from request
+    const { categoryId, itemPurchased, cost, plaidCategory } = createTransactionDto;
 
     // Ensure user exists
     try {
@@ -26,7 +30,7 @@ export class TransactionsService {
       throw new BadRequestException('User does not exist');
     }
 
-  let category: any = undefined;
+    let category: any = undefined;
     if (categoryId) {
       try {
         category = await this.categoriesService.findOne(categoryId);
@@ -47,26 +51,25 @@ export class TransactionsService {
   }
 
   async findAll(): Promise<Transaction[]> {
-    return this.transactionRepository.find({ relations: ['user', 'category'] });
+    const user_id = this.request.user_id;
+    return this.transactionRepository.find({ 
+      where: { user: { userId: user_id } },
+      relations: ['user', 'category'] 
+    });
   }
 
   async findOne(id: number): Promise<Transaction> {
-    const tx = await this.transactionRepository.findOne({ where: { transactionId: id }, relations: ['user', 'category'] });
-    if (!tx) throw new NotFoundException(`Transaction with id ${id} not found`);
+    const user_id = this.request.user_id;
+    const tx = await this.transactionRepository.findOne({ 
+      where: { transactionId: id, user: { userId: user_id } }, 
+      relations: ['user', 'category'] 
+    });
+    if (!tx) throw new NotFoundException(`Transaction with id ${id} not found or you don't have access to it`);
     return tx;
   }
 
   async update(id: number, updateTransactionDto: UpdateTransactionDto): Promise<Transaction> {
-    const tx = await this.findOne(id);
-
-    if (updateTransactionDto.userId && updateTransactionDto.userId !== tx.user.userId) {
-      try {
-        await this.usersService.findOne(updateTransactionDto.userId);
-      } catch (e) {
-        throw new BadRequestException('User does not exist');
-      }
-      tx.user = { userId: updateTransactionDto.userId } as any;
-    }
+    const tx = await this.findOne(id); // findOne already checks user ownership
 
     if (updateTransactionDto.categoryId !== undefined) {
       if (updateTransactionDto.categoryId === null) {
