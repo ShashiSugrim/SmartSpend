@@ -8,7 +8,13 @@ import { UsersModule } from '../users/users.module';
 @Module({
   imports: [TypeOrmModule.forFeature([SpendingCategory]), UsersModule],
   controllers: [SpendingCategoriesController],
-  providers: [SpendingCategoriesService],
+  providers: [
+    {
+      provide: SpendingCategoriesService,
+      useClass: SpendingCategoriesService,
+      scope: 2, // REQUEST scope
+    },
+  ],
   exports: [SpendingCategoriesService],
 })
 export class SpendingCategoriesModule {}
