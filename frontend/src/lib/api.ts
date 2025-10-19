@@ -1,0 +1,283 @@
+// API utility functions for SmartSpend
+
+const API_BASE_URL = 'http://localhost:3000';
+
+/**
+ * Sign up a new user
+ */
+export async function signupUser(email: string, password: string, income: string) {
+    const response = await fetch(`${API_BASE_URL}/users`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            email,
+            password,
+            income
+        }),
+    });
+
+    if (!response.ok) {
+        if (response.status === 409 || response.status === 400) {
+            throw new Error('EMAIL_ALREADY_USED');
+        }
+        throw new Error('SIGNUP_FAILED');
+    }
+
+    return response;
+}
+
+/**
+ * Login a user and return the access token
+ */
+export async function loginUser(email: string, password: string): Promise<string> {
+    const response = await fetch(`${API_BASE_URL}/users/login`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            email,
+            password
+        }),
+    });
+
+    if (!response.ok) {
+        throw new Error('LOGIN_FAILED');
+    }
+
+    const data = await response.json();
+    return data.access_token;
+}
+
+/**
+ * Store access token and user email in localStorage
+ */
+export function storeAccessToken(token: string, email?: string) {
+    localStorage.setItem('accessToken', token);
+    if (email) {
+        localStorage.setItem('userEmail', email);
+    }
+}
+
+/**
+ * Get access token from localStorage
+ */
+export function getAccessToken(): string | null {
+    return localStorage.getItem('accessToken');
+}
+
+/**
+ * Get user email from localStorage
+ */
+export function getUserEmail(): string | null {
+    return localStorage.getItem('userEmail');
+}
+
+/**
+ * Remove access token and user email from localStorage (logout)
+ */
+export function clearAccessToken() {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('userEmail');
+}
+
+/**
+ * Check if user is authenticated
+ */
+export function isAuthenticated(): boolean {
+    return getAccessToken() !== null;
+}
+
+/**
+ * Create a spending category
+ */
+export async function createSpendingCategory(name: string, totalBudgetNumber: number): Promise<void> {
+    const token = getAccessToken();
+    
+    if (!token) {
+        throw new Error('NO_AUTH_TOKEN');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/spending-categories`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+            name,
+            totalBudgetNumber
+        }),
+    });
+
+    if (!response.ok) {
+        throw new Error('CREATE_CATEGORY_FAILED');
+    }
+}
+
+/**
+ * Category interface matching the backend response
+ */
+export interface SpendingCategory {
+    categoryId: number;
+    user: {
+        userId: number;
+        email: string;
+        password: string;
+        name: string | null;
+        income: string;
+        createdAt: string;
+        updatedAt: string;
+    };
+    name: string;
+    totalBudgetPercent: number | null;
+    totalBudgetNumber: string;
+    createdAt: string;
+    updatedAt: string;
+    current_total: number;
+}
+
+/**
+ * Get all spending categories for the logged-in user
+ */
+export async function getSpendingCategories(): Promise<SpendingCategory[]> {
+    const token = getAccessToken();
+    
+    if (!token) {
+        throw new Error('NO_AUTH_TOKEN');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/spending-categories`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'text/plain',
+            'Authorization': `Bearer ${token}`
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error('FETCH_CATEGORIES_FAILED');
+    }
+
+    return response.json();
+}
+
+/**
+ * Transaction interface matching the backend response
+ */
+export interface Transaction {
+    transactionId: number;
+    category: {
+        categoryId: number;
+        name: string;
+        totalBudgetNumber: string;
+    };
+    itemPurchased: string;
+    cost: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+/**
+ * Create a new transaction
+ */
+export async function createTransaction(
+    categoryId: number,
+    itemPurchased: string,
+    cost: number
+): Promise<void> {
+    const token = getAccessToken();
+    
+    if (!token) {
+        throw new Error('NO_AUTH_TOKEN');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/transactions`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+            categoryId,
+            itemPurchased,
+            cost
+        }),
+    });
+
+    if (!response.ok) {
+        throw new Error('CREATE_TRANSACTION_FAILED');
+    }
+}
+
+/**
+ * Get all transactions for the logged-in user
+ */
+export async function getTransactions(): Promise<Transaction[]> {
+    const token = getAccessToken();
+    
+    if (!token) {
+        throw new Error('NO_AUTH_TOKEN');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/transactions`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error('FETCH_TRANSACTIONS_FAILED');
+    }
+
+    return response.json();
+}
+
+/**
+ * Delete a transaction
+ */
+export async function deleteTransaction(transactionId: number): Promise<void> {
+    const token = getAccessToken();
+    
+    if (!token) {
+        throw new Error('NO_AUTH_TOKEN');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/transactions/${transactionId}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'text/plain',
+            'Authorization': `Bearer ${token}`
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error('DELETE_TRANSACTION_FAILED');
+    }
+}
+
+/**
+ * Delete a spending category
+ */
+export async function deleteSpendingCategory(categoryId: number): Promise<void> {
+    const token = getAccessToken();
+    
+    if (!token) {
+        throw new Error('NO_AUTH_TOKEN');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/spending-categories/${categoryId}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error('DELETE_CATEGORY_FAILED');
+    }
+}
