@@ -156,7 +156,7 @@ const SignupWizard = () => {
                 await createSpendingCategory(category.name, parseFloat(category.totalBudgetNumber));
             }
 
-            // Success! Redirect to home page
+            // Success! Redirect to home page where they'll see the "View My Categories" button
             window.location.href = '/';
             
         } catch (error) {

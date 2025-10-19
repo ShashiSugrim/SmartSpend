@@ -52,6 +52,13 @@ const SignInButton = () => {
           {showDropdown && (
             <div className="absolute top-full mt-2 left-0 w-48 bg-white/90 backdrop-blur-md border border-cyan-200 rounded-xl shadow-lg p-2 animate-fade-in">
               <Button
+                onClick={() => window.location.href = '/categories'}
+                variant="ghost"
+                className="w-full justify-start text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+              >
+                📊 My Categories
+              </Button>
+              <Button
                 onClick={handleLogout}
                 variant="ghost"
                 className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"

@@ -116,3 +116,50 @@ export async function createSpendingCategory(name: string, totalBudgetNumber: nu
         throw new Error('CREATE_CATEGORY_FAILED');
     }
 }
+
+/**
+ * Category interface matching the backend response
+ */
+export interface SpendingCategory {
+    categoryId: number;
+    user: {
+        userId: number;
+        email: string;
+        password: string;
+        name: string | null;
+        income: string;
+        createdAt: string;
+        updatedAt: string;
+    };
+    name: string;
+    totalBudgetPercent: number | null;
+    totalBudgetNumber: string;
+    createdAt: string;
+    updatedAt: string;
+    current_total: number;
+}
+
+/**
+ * Get all spending categories for the logged-in user
+ */
+export async function getSpendingCategories(): Promise<SpendingCategory[]> {
+    const token = getAccessToken();
+    
+    if (!token) {
+        throw new Error('NO_AUTH_TOKEN');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/spending-categories`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'text/plain',
+            'Authorization': `Bearer ${token}`
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error('FETCH_CATEGORIES_FAILED');
+    }
+
+    return response.json();
+}

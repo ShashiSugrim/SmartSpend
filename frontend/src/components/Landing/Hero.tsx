@@ -1,8 +1,17 @@
 import { Button } from "@/components/ui/button.tsx";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, LayoutGrid } from "lucide-react";
 import { Link } from "react-router-dom";
+import { isAuthenticated, getUserEmail } from "@/lib/api";
+import { useEffect, useState } from "react";
 
 const Hero = () => {
+    const [userLoggedIn, setUserLoggedIn] = useState(false);
+    const [userEmail, setUserEmail] = useState<string | null>(null);
+
+    useEffect(() => {
+        setUserLoggedIn(isAuthenticated());
+        setUserEmail(getUserEmail());
+    }, []);
     return (
         <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-hero">
             {/* Animated background glow */}
@@ -33,23 +42,46 @@ const Hero = () => {
 
                     {/* CTA Buttons */}
                     <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
-                        <Button
-                            asChild
-                            size="lg"
-                            className="bg-gradient-primary hover:opacity-90 transition-opacity shadow-lg text-lg px-8 group"
-                        >
-                            <Link to="/signup">
-                                Get Started Free
-                                <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
-                            </Link>
-                        </Button>
-                        <Button
-                            size="lg"
-                            variant="outline"
-                            className="text-lg px-8 border-2"
-                        >
-                            Watch Demo
-                        </Button>
+                        {userLoggedIn ? (
+                            // Buttons for logged-in users
+                            <>
+                                <Button
+                                    asChild
+                                    size="lg"
+                                    className="bg-gradient-primary hover:opacity-90 transition-opacity shadow-lg text-lg px-8 group"
+                                >
+                                    <Link to="/categories">
+                                        <LayoutGrid className="mr-2 w-5 h-5" />
+                                        View My Categories
+                                        <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
+                                    </Link>
+                                </Button>
+                                <div className="text-sm text-muted-foreground">
+                                    Welcome back, <span className="font-medium text-primary">{userEmail}</span>! 👋
+                                </div>
+                            </>
+                        ) : (
+                            // Buttons for non-logged-in users
+                            <>
+                                <Button
+                                    asChild
+                                    size="lg"
+                                    className="bg-gradient-primary hover:opacity-90 transition-opacity shadow-lg text-lg px-8 group"
+                                >
+                                    <Link to="/signup">
+                                        Get Started Free
+                                        <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
+                                    </Link>
+                                </Button>
+                                <Button
+                                    size="lg"
+                                    variant="outline"
+                                    className="text-lg px-8 border-2"
+                                >
+                                    Watch Demo
+                                </Button>
+                            </>
+                        )}
                     </div>
 
                     {/* Social proof */}
