@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { CreateSpendingCategoryDto } from './dto/create-spending_category.dto';
 import { UpdateSpendingCategoryDto } from './dto/update-spending_category.dto';
 import { SpendingCategory } from './entities/spending_category.entity';
+import { Transaction } from '../transactions/entities/transaction.entity';
 import { UsersService } from '../users/users.service';
 import { REQUEST } from '@nestjs/core';
 import type { UserRequest } from '../common/middleware/auth.middleware';
@@ -13,6 +14,8 @@ export class SpendingCategoriesService {
   constructor(
     @InjectRepository(SpendingCategory)
     private readonly categoryRepository: Repository<SpendingCategory>,
+    @InjectRepository(Transaction)
+    private readonly transactionRepository: Repository<Transaction>,
     private readonly usersService: UsersService,
     @Inject(REQUEST) private readonly request: UserRequest,
   ) {}
@@ -38,12 +41,58 @@ export class SpendingCategoriesService {
     return this.categoryRepository.save(category);
   }
 
-  async findAll(): Promise<SpendingCategory[]> {
+  async findAll(): Promise<any[]> {
     const user_id = this.request.user_id;
-    return this.categoryRepository.find({ 
+    const categories = await this.categoryRepository.find({ 
       where: { user: { userId: user_id } },
       relations: ['user'] 
     });
+
+    // For each category, calculate the current_total from transactions
+    const categoriesWithTotals = await Promise.all(
+      categories.map(async (category) => {
+        const currentTotal = await this.calculateCategoryTotal(category.categoryId, user_id);
+        return {
+          ...category,
+          current_total: currentTotal,
+        };
+      })
+    );
+
+    return categoriesWithTotals;
+  }
+
+  /**
+   * Get all transactions for a specific category and user
+   */
+  async getAllTransactionsByCategory(categoryId: number): Promise<Transaction[]> {
+    const user_id = this.request.user_id;
+    return this.transactionRepository.find({
+      where: {
+        category: { categoryId },
+        user: { userId: user_id },
+      },
+    });
+  }
+
+  /**
+   * Calculate the total amount spent on a category
+   */
+  private async calculateCategoryTotal(categoryId: number, userId: number): Promise<number> {
+    const transactions = await this.transactionRepository.find({
+      where: {
+        category: { categoryId },
+        user: { userId },
+      },
+    });
+
+    // Sum up all the costs
+    const total = transactions.reduce((sum, transaction) => {
+      return sum + Number(transaction.cost);
+    }, 0);
+
+    // Round to 2 decimal places
+    return Math.round(total * 100) / 100;
   }
 
   async findOne(id: number): Promise<SpendingCategory> {
