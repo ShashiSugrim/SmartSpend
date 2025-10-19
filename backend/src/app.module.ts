@@ -1,44 +1,38 @@
-// src/app.module.ts
-
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
-import { User } from './users/entities/user.entity';
 import { SpendingCategoriesModule } from './spending_categories/spending_categories.module';
-import { SpendingCategory } from './spending_categories/entities/spending_category.entity';
 import { TransactionsModule } from './transactions/transactions.module';
 import { AuthMiddleware } from './common/middleware/auth.middleware';
+import { join } from 'path';
 
 @Module({
   imports: [
-    // 1. Load the .env file
     ConfigModule.forRoot({
-      isGlobal: true, // Makes the ConfigService available throughout the app
+      isGlobal: true,
+      envFilePath: [join(__dirname, '..', '.env'), '.env', '.env.local'],
     }),
-
-    // 2. Configure the database connection using the environment variables
     TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        host: configService.get<string>('DB_HOST'),
-        port: configService.get<number>('DB_PORT'),
-        username: configService.get<string>('DB_USERNAME'),
-        password: configService.get<string>('DB_PASSWORD'),
-        database: configService.get<string>('DB_DATABASE'),
-  entities: [User, SpendingCategory, require('./transactions/entities/transaction.entity').Transaction], // Register entities
-        synchronize: true, // BE CAREFUL: Automatically creates DB schema. Good for dev, but use migrations for production.
-      }),
+      useFactory: (cfg: ConfigService) => {
+        const url = cfg.get<string>('DATABASE_URL');
+        if (!url || !url.startsWith('postgres')) {
+          throw new Error('DATABASE_URL missing/invalid');
+        }
+        return {
+          type: 'postgres',
+          url,
+          autoLoadEntities: true,
+          synchronize: false,
+          ssl: { rejectUnauthorized: false }, // dev-friendly; use CA for prod
+        };
+      },
     }),
-
     UsersModule,
-
     SpendingCategoriesModule,
-
     TransactionsModule,
   ],
   controllers: [AppController],
@@ -46,8 +40,17 @@ import { AuthMiddleware } from './common/middleware/auth.middleware';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(AuthMiddleware)
-      .forRoutes('*'); // Apply to all routes
+    // DISABLED FOR HACKATHON - NO AUTH REQUIRED
+    // consumer
+    //   .apply(AuthMiddleware)
+    //   .exclude(
+    //     { path: '/', method: RequestMethod.GET },
+
+    //     // PUBLIC endpoints
+    //     { path: 'users', method: RequestMethod.POST },          // signup
+    //     { path: 'users/login', method: RequestMethod.POST },    // login
+    //     { path: 'users/signup-seed', method: RequestMethod.POST } // signup + seed categories
+    //   )
+    //   .forRoutes('*');
   }
 }

@@ -1,57 +1,46 @@
-import { Injectable, NotFoundException, BadRequestException, Inject, Scope } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import type { Repository } from 'typeorm';
 import { CreateSpendingCategoryDto } from './dto/create-spending_category.dto';
 import { UpdateSpendingCategoryDto } from './dto/update-spending_category.dto';
 import { SpendingCategory } from './entities/spending_category.entity';
 import { Transaction } from '../transactions/entities/transaction.entity';
-import { UsersService } from '../users/users.service';
-import { REQUEST } from '@nestjs/core';
-import type { UserRequest } from '../common/middleware/auth.middleware';
+import { User } from '../users/entities/user.entity';
 
-@Injectable({ scope: Scope.REQUEST })
+@Injectable()
 export class SpendingCategoriesService {
   constructor(
     @InjectRepository(SpendingCategory)
     private readonly categoryRepository: Repository<SpendingCategory>,
     @InjectRepository(Transaction)
     private readonly transactionRepository: Repository<Transaction>,
-    private readonly usersService: UsersService,
-    @Inject(REQUEST) private readonly request: UserRequest,
   ) {}
 
   async create(createSpendingCategoryDto: CreateSpendingCategoryDto): Promise<SpendingCategory> {
-    const userId = this.request.user_id; // Get userId from request
-    const { name, totalBudgetPercent, totalBudgetNumber } = createSpendingCategoryDto;
+    // HACKATHON MODE: Use a default user ID (1) for all categories
+    const defaultUserId = 1;
 
-    // Ensure user exists
-    try {
-      await this.usersService.findOne(userId);
-    } catch (e) {
-      throw new BadRequestException('User does not exist');
-    }
-
-    const category = this.categoryRepository.create({
-      user: { userId } as any,
-      name,
-      totalBudgetPercent,
-      totalBudgetNumber,
-    });
+    const category = new SpendingCategory();
+    category.user = { userId: defaultUserId } as User;
+    category.name = createSpendingCategoryDto.name;
+    category.totalBudgetPercent = createSpendingCategoryDto.totalBudgetPercent ?? undefined;
+    category.totalBudgetNumber = createSpendingCategoryDto.totalBudgetNumber ?? undefined;
 
     return this.categoryRepository.save(category);
   }
 
   async findAll(): Promise<any[]> {
-    const user_id = this.request.user_id;
+    // HACKATHON MODE: Return all categories for default user (1)
+    const defaultUserId = 1;
     const categories = await this.categoryRepository.find({ 
-      where: { user: { userId: user_id } },
+      where: { user: { userId: defaultUserId } },
       relations: ['user'] 
     });
 
     // For each category, calculate the current_total from transactions
     const categoriesWithTotals = await Promise.all(
       categories.map(async (category) => {
-        const currentTotal = await this.calculateCategoryTotal(category.categoryId, user_id);
+        const currentTotal = await this.calculateCategoryTotal(category.categoryId, defaultUserId);
         return {
           ...category,
           current_total: currentTotal,
@@ -62,22 +51,6 @@ export class SpendingCategoriesService {
     return categoriesWithTotals;
   }
 
-  /**
-   * Get all transactions for a specific category and user
-   */
-  async getAllTransactionsByCategory(categoryId: number): Promise<Transaction[]> {
-    const user_id = this.request.user_id;
-    return this.transactionRepository.find({
-      where: {
-        category: { categoryId },
-        user: { userId: user_id },
-      },
-    });
-  }
-
-  /**
-   * Calculate the total amount spent on a category
-   */
   private async calculateCategoryTotal(categoryId: number, userId: number): Promise<number> {
     const transactions = await this.transactionRepository.find({
       where: {
@@ -96,19 +69,19 @@ export class SpendingCategoriesService {
   }
 
   async findOne(id: number): Promise<SpendingCategory> {
-    const user_id = this.request.user_id;
+    const defaultUserId = 1;
     const category = await this.categoryRepository.findOne({ 
-      where: { categoryId: id, user: { userId: user_id } }, 
+      where: { categoryId: id, user: { userId: defaultUserId } }, 
       relations: ['user'] 
     });
     if (!category) {
-      throw new NotFoundException(`Spending category with id ${id} not found or you don't have access to it`);
+      throw new NotFoundException(`Spending category with id ${id} not found`);
     }
     return category;
   }
 
   async update(id: number, updateSpendingCategoryDto: UpdateSpendingCategoryDto): Promise<SpendingCategory> {
-    const category = await this.findOne(id); // findOne already checks user ownership
+    const category = await this.findOne(id);
 
     if (updateSpendingCategoryDto.name !== undefined) category.name = updateSpendingCategoryDto.name;
     if (updateSpendingCategoryDto.totalBudgetPercent !== undefined) category.totalBudgetPercent = updateSpendingCategoryDto.totalBudgetPercent;

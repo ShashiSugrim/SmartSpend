@@ -32,11 +32,7 @@ const CategoriesPage = () => {
     }>({});
 
     useEffect(() => {
-        // Check if user is authenticated
-        if (!isAuthenticated()) {
-            window.location.href = '/login';
-            return;
-        }
+        // HACKATHON MODE: Skip authentication check
 
         // Fetch categories
         const fetchCategories = async () => {

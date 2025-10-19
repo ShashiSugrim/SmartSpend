@@ -94,17 +94,11 @@ export function isAuthenticated(): boolean {
  * Create a spending category
  */
 export async function createSpendingCategory(name: string, totalBudgetNumber: number): Promise<void> {
-    const token = getAccessToken();
-    
-    if (!token) {
-        throw new Error('NO_AUTH_TOKEN');
-    }
-
+    // HACKATHON MODE: No authentication required
     const response = await fetch(`${API_BASE_URL}/spending-categories`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            'Content-Type': 'application/json'
         },
         body: JSON.stringify({
             name,
@@ -113,7 +107,9 @@ export async function createSpendingCategory(name: string, totalBudgetNumber: nu
     });
 
     if (!response.ok) {
-        throw new Error('CREATE_CATEGORY_FAILED');
+        const errorText = await response.text();
+        console.error('Create category failed:', response.status, errorText);
+        throw new Error(`CREATE_CATEGORY_FAILED: ${response.status} - ${errorText}`);
     }
 }
 
@@ -143,17 +139,11 @@ export interface SpendingCategory {
  * Get all spending categories for the logged-in user
  */
 export async function getSpendingCategories(): Promise<SpendingCategory[]> {
-    const token = getAccessToken();
-    
-    if (!token) {
-        throw new Error('NO_AUTH_TOKEN');
-    }
-
+    // HACKATHON MODE: No authentication required
     const response = await fetch(`${API_BASE_URL}/spending-categories`, {
         method: 'GET',
         headers: {
-            'Content-Type': 'text/plain',
-            'Authorization': `Bearer ${token}`
+            'Content-Type': 'application/json'
         },
     });
 
@@ -188,17 +178,11 @@ export async function createTransaction(
     itemPurchased: string,
     cost: number
 ): Promise<void> {
-    const token = getAccessToken();
-    
-    if (!token) {
-        throw new Error('NO_AUTH_TOKEN');
-    }
-
+    // HACKATHON MODE: No authentication required
     const response = await fetch(`${API_BASE_URL}/transactions`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            'Content-Type': 'application/json'
         },
         body: JSON.stringify({
             categoryId,
@@ -216,16 +200,11 @@ export async function createTransaction(
  * Get all transactions for the logged-in user
  */
 export async function getTransactions(): Promise<Transaction[]> {
-    const token = getAccessToken();
-    
-    if (!token) {
-        throw new Error('NO_AUTH_TOKEN');
-    }
-
+    // HACKATHON MODE: No authentication required
     const response = await fetch(`${API_BASE_URL}/transactions`, {
         method: 'GET',
         headers: {
-            'Authorization': `Bearer ${token}`
+            'Content-Type': 'application/json'
         },
     });
 

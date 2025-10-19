@@ -1,9 +1,16 @@
+import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
+import dns from 'node:dns';
+
+dns.setDefaultResultOrder('verbatim'); // or 'verbatim' on Node ≥18
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  
+  // Debug: Check if DATABASE_URL is loaded
+  console.log('DB URL present?', typeof process.env.DATABASE_URL, process.env.DATABASE_URL?.startsWith('postgres'));
   
   // Enable global validation
   app.useGlobalPipes(

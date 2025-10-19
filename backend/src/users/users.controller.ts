@@ -7,66 +7,130 @@ import {
   Param,
   Delete,
   ParseIntPipe,
-  HttpCode,
-  HttpStatus,
-  ValidationPipe,
   UnauthorizedException,
 } from '@nestjs/common';
+import * as jwt from 'jsonwebtoken';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import { LoginUserDto } from './dto/login-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
-import * as jwt from 'jsonwebtoken';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { SpendingCategory } from '../spending_categories/entities/spending_category.entity';
+
+type SafeUser = Omit<User, 'password'>;
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    @InjectRepository(SpendingCategory)
+    private readonly categoryRepository: Repository<SpendingCategory>,
+  ) {}
 
+  // SIGN UP (public) - returns SafeUser only
   @Post()
-  @HttpCode(HttpStatus.CREATED)
-  async create(@Body(ValidationPipe) createUserDto: CreateUserDto): Promise<User> {
-    return this.usersService.create(createUserDto);
+  create(@Body() body: CreateUserDto): Promise<SafeUser> {
+    return this.usersService.create(body);
   }
 
-  @Post('login')
-  @HttpCode(HttpStatus.OK)
-  async login(@Body(ValidationPipe) loginUserDto: LoginUserDto): Promise<{ access_token: string }> {
-    const { email, password } = loginUserDto;
+  // SIGN UP + SEED CATEGORIES (public) - returns token + SafeUser
+  @Post('signup-seed')
+  async signupAndSeed(
+    @Body()
+    body: {
+      user: CreateUserDto;
+      categories: Array<{
+        name: string;
+        totalBudgetNumber?: any;   // can be "$ 233" – your DTO transform will clean
+        totalBudgetPercent?: any;  // idem
+      }>;
+    },
+  ): Promise<{ access_token: string; user: SafeUser }> {
+    // 1) Create user
+    const user = await this.usersService.create(body.user);
 
-    const user = await this.usersService.validatePassword(email, password);
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+    // 2) Sign token
+    const access_token = jwt.sign(
+      { sub: user.userId, email: user.email },
+      process.env.JWT_SECRET as string,
+      { expiresIn: '7d' },
+    );
+
+    // 3) Seed categories for this user
+    if (body.categories && body.categories.length > 0) {
+      const categories = body.categories.map((c) => {
+        const category = new SpendingCategory();
+        category.user = { userId: user.userId } as User;
+        category.name = c.name;
+        
+        // Transform string values to numbers
+        if (c.totalBudgetNumber) {
+          const cleaned = String(c.totalBudgetNumber).replace(/[^0-9.\-]/g, '');
+          const num = Number(cleaned);
+          category.totalBudgetNumber = Number.isFinite(num) ? num : undefined;
+        }
+        
+        if (c.totalBudgetPercent) {
+          const cleaned = String(c.totalBudgetPercent).replace(/[^0-9.\-]/g, '');
+          const num = Number(cleaned);
+          category.totalBudgetPercent = Number.isFinite(num) ? num : undefined;
+        }
+        
+        return category;
+      });
+      
+      await this.categoryRepository.save(categories);
     }
 
-    const payload = { sub: user.userId, email: user.email };
-    const secret = process.env.JWT_SECRET || 'change_this_secret_in_production';
-    const token = jwt.sign(payload, secret, { expiresIn: '7d' });
-
-    return { access_token: token };
+    // 4) Return token + user
+    return { access_token, user };
   }
 
+  // LOGIN (public)
+  @Post('login')
+  async login(
+    @Body() body: { email: string; password: string },
+  ): Promise<{ access_token: string; user: SafeUser }> {
+    const user = await this.usersService.validatePassword(
+      body.email,
+      body.password,
+    );
+    if (!user) throw new UnauthorizedException('Invalid email or password');
+
+    const access_token = jwt.sign(
+      { sub: user.userId, email: user.email },
+      process.env.JWT_SECRET as string,
+      { expiresIn: '7d' },
+    );
+
+    return { access_token, user };
+  }
+
+  // LIST (protected)
   @Get()
-  async findAll(): Promise<User[]> {
+  findAll(): Promise<SafeUser[]> {
     return this.usersService.findAll();
   }
 
+  // GET ONE (protected)
   @Get(':id')
-  async findOne(@Param('id', ParseIntPipe) id: number): Promise<User> {
+  findOne(@Param('id', ParseIntPipe) id: number): Promise<SafeUser> {
     return this.usersService.findOne(id);
   }
 
+  // UPDATE (protected)
   @Patch(':id')
-  async update(
-    @Param('id', ParseIntPipe) id: number, 
-    @Body(ValidationPipe) updateUserDto: UpdateUserDto
-  ): Promise<User> {
-    return this.usersService.update(id, updateUserDto);
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: UpdateUserDto,
+  ): Promise<SafeUser> {
+    return this.usersService.update(id, body);
   }
 
+  // DELETE (protected)
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
+  remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.usersService.remove(id);
   }
 }
