@@ -3,6 +3,7 @@ import {
     getTransactions,
     getSpendingCategories,
     createTransaction,
+    deleteTransaction,
     getUserEmail,
     isAuthenticated,
     type Transaction,
@@ -12,6 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Trash2 } from 'lucide-react';
 
 const TransactionsPage = () => {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -134,6 +136,24 @@ const TransactionsPage = () => {
 
     const getTotalSpent = () => {
         return filteredTransactions.reduce((sum, t) => sum + parseFloat(t.cost), 0);
+    };
+
+    const handleDeleteTransaction = async (transactionId: number, itemName: string) => {
+        if (!confirm(`Are you sure you want to delete "${itemName}"?`)) {
+            return;
+        }
+
+        try {
+            await deleteTransaction(transactionId);
+            
+            // Refresh transactions
+            const updatedTransactions = await getTransactions();
+            setTransactions(updatedTransactions);
+            
+        } catch (err) {
+            console.error('Error deleting transaction:', err);
+            alert('Failed to delete transaction. Please try again.');
+        }
     };
 
     if (isLoading) {
@@ -378,13 +398,23 @@ const TransactionsPage = () => {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div className="text-right">
-                                                    <p className="text-xl font-bold text-gray-800">
-                                                        ${parseFloat(transaction.cost).toFixed(2)}
-                                                    </p>
-                                                    <p className="text-xs text-gray-500">
-                                                        #{transaction.transactionId}
-                                                    </p>
+                                                <div className="flex items-center gap-4">
+                                                    <div className="text-right">
+                                                        <p className="text-xl font-bold text-gray-800">
+                                                            ${parseFloat(transaction.cost).toFixed(2)}
+                                                        </p>
+                                                        <p className="text-xs text-gray-500">
+                                                            #{transaction.transactionId}
+                                                        </p>
+                                                    </div>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => handleDeleteTransaction(transaction.transactionId, transaction.itemPurchased)}
+                                                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </Button>
                                                 </div>
                                             </div>
                                         ))}

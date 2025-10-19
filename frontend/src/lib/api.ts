@@ -235,3 +235,49 @@ export async function getTransactions(): Promise<Transaction[]> {
 
     return response.json();
 }
+
+/**
+ * Delete a transaction
+ */
+export async function deleteTransaction(transactionId: number): Promise<void> {
+    const token = getAccessToken();
+    
+    if (!token) {
+        throw new Error('NO_AUTH_TOKEN');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/transactions/${transactionId}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'text/plain',
+            'Authorization': `Bearer ${token}`
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error('DELETE_TRANSACTION_FAILED');
+    }
+}
+
+/**
+ * Delete a spending category
+ */
+export async function deleteSpendingCategory(categoryId: number): Promise<void> {
+    const token = getAccessToken();
+    
+    if (!token) {
+        throw new Error('NO_AUTH_TOKEN');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/spending-categories/${categoryId}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error('DELETE_CATEGORY_FAILED');
+    }
+}
